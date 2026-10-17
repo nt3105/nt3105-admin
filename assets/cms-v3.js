@@ -57,7 +57,7 @@ const safeAsset=(s)=>validUrl(s)?clean(s):"";
 const clone=o=>JSON.parse(JSON.stringify(o));
 function merge(a,b){for(const [k,v] of Object.entries(b||{})){if(Array.isArray(v))a[k]=v;else if(v&&typeof v==="object")a[k]=Object.assign({},a[k]||{},v);else a[k]=v;}return a}
 function initial(){return clone(defaults)}
-let client=null,state=initial(),panel=null,tab="overview",lastPublished=null,loadOkay=false,publishing=false;
+let client=null,state=initial(),panel=null,tab="overview",lastPublished=null,loadOkay=false,publishing=false,previewMobile=false;
 const toast=(s,isError=false)=>{const t=$("#cmsNotice");if(t){t.textContent=s;t.className="cms-notice "+(isError?"error":"");}};
 function makeField(area,key,label,type,min=0,max=100,idx=-1){
  const source=area==="tracks"?state.music.tracks:state[area];
@@ -66,7 +66,7 @@ function makeField(area,key,label,type,min=0,max=100,idx=-1){
  const path='data-area="'+area+'" data-key="'+key+'"'+attrs;
  if(type==="check")return '<label class="cms-check"><input type="checkbox" '+path+' '+(val?"checked":"")+'/><span>'+clean(label)+'</span></label>';
  if(type==="range")return '<label class="cms-field"><span>'+clean(label)+' <output>'+Number(val||0)+'</output></span><input type="range" min="'+min+'" max="'+max+'" value="'+Number(val||0)+'" '+path+' /></label>';
- if(type==="image"||type==="audio")return '<label class="cms-field"><span>'+clean(label)+'</span><div class="cms-upload">'+(type==="image"&&safeAsset(val)?'<img src="'+safeAsset(val)+'" alt="Ảnh đang chọn" loading="lazy">':"")+'<input class="cms-input" type="url" placeholder="Hoặc dán liên kết HTTPS" value="'+clean(val||"")+'" '+path+'/><label class="cms-file">↥ Tải '+(type==="audio"?"nhạc":"ảnh")+'<input type="file" accept="'+(type==="audio"?"audio/mpeg,audio/wav,audio/ogg,audio/mp4":"image/jpeg,image/png,image/webp,image/gif")+'" data-upload-area="'+area+'" data-upload-key="'+key+'"'+attrs+' /></label></div></label>';
+ if(type==="image"||type==="audio")return '<div class="cms-field"><span>'+clean(label)+'</span><div class="cms-upload">'+(type==="image"&&safeAsset(val)?'<img src="'+safeAsset(val)+'" alt="Ảnh đang chọn" loading="lazy">':"")+'<input class="cms-input" type="url" placeholder="Hoặc dán liên kết HTTPS" value="'+clean(val||"")+'" '+path+'/><label class="cms-file">↥ Tải '+(type==="audio"?"nhạc":"ảnh")+'<input type="file" accept="'+(type==="audio"?"audio/mpeg,audio/wav,audio/ogg,audio/mp4":"image/jpeg,image/png,image/webp,image/gif")+'" data-upload-area="'+area+'" data-upload-key="'+key+'"'+attrs+' /></label></div></div>';
  const tag=type==="textarea"?'<textarea class="cms-input" rows="3" '+path+'>'+clean(val||"")+'</textarea>':'<input class="cms-input" type="'+(type==="color"?"color":type==="url"?"url":"text")+'" maxlength="400" value="'+clean(val||"")+'" '+path+' />';
  return '<label class="cms-field"><span>'+clean(label)+'</span>'+tag+'</label>';
 }
@@ -193,13 +193,27 @@ function downloadJson(){
  const url=URL.createObjectURL(blob),link=document.createElement("a");
  link.href=url;link.download="nt3105-cms-draft.json";link.click();URL.revokeObjectURL(url);
 }
+function restorePublished(){
+ if(!lastPublished){toast("Chưa có phiên bản đã xuất bản để khôi phục.",true);return}
+ if(!confirm("Khôi phục dữ liệu đã xuất bản vào bản nháp? Website công khai không thay đổi."))return;
+ state=clone(lastPublished);renderEditor();renderPreview();toast("✓ Đã phục hồi bản nháp. Chọn Lưu nháp để lưu lại.");
+}
+async function importJSON(file){
+ if(!file||file.size>512000){toast("Tệp JSON phải nhỏ hơn 500 KB.",true);return}
+ try{
+  const x=JSON.parse(await file.text());
+  if(!x||typeof x!=="object"||Array.isArray(x))throw Error("Không phải cấu hình CMS hợp lệ.");
+  if(!confirm("Thay toàn bộ bản nháp hiện tại bằng dữ liệu JSON?"))return;
+  state=merge(initial(),x);renderEditor();renderPreview();toast("✓ Đã nhập vào bản xem trước. Hãy Lưu nháp để lưu.");
+ }catch(error){console.error(error);toast("Không đọc được tệp JSON hợp lệ.",true)}
+}
 function setupUI(){
  const parent=$("#portal");if(!parent||$("#cmsStudio"))return;
  const section=document.createElement("section");section.id="cmsStudio";section.className="cms-studio glass";
- section.innerHTML='<div class="cms-head"><div><span class="cms-kicker">CONTENT STUDIO · V3 PREVIEW</span><h2>Quản trị website</h2><p>Sửa nội dung · Xem trước · Lưu nháp · Xuất bản</p></div><div class="cms-actions"><button type="button" id="cmsExport" class="cms-btn">↓ JSON</button><button type="button" id="cmsSave" class="cms-btn">Lưu nháp</button><button type="button" id="cmsPublish" class="cms-btn cms-primary">Xuất bản ↗</button></div></div>'+
+ section.innerHTML='<div class="cms-head"><div><span class="cms-kicker">CONTENT STUDIO · V3 PREVIEW</span><h2>Quản trị website</h2><p>Sửa nội dung · Xem trước · Lưu nháp · Xuất bản</p></div><div class="cms-actions"><button type="button" id="cmsExport" class="cms-btn">↓ JSON</button><button type="button" id="cmsImport" class="cms-btn">↑ Nhập JSON</button><input id="cmsImportFile" type="file" accept="application/json,.json" hidden><button type="button" id="cmsRestore" class="cms-btn">↶ Bản đã xuất bản</button><button type="button" id="cmsSave" class="cms-btn">Lưu nháp</button><button type="button" id="cmsPublish" class="cms-btn cms-primary">Xuất bản ↗</button></div></div>'+
  '<div id="cmsNotice" class="cms-notice" role="status" aria-live="polite">Đang xác thực kết nối CMS...</div>'+
  '<div class="cms-tabs" role="navigation" aria-label="Chuyên mục Admin">'+groups.map(g=>'<button class="cms-tab'+(g[0]==="overview"?" active":"")+'" type="button" data-tab="'+g[0]+'"><span>'+g[1]+'</span> '+g[2]+'</button>').join("")+'</div>'+
- '<div class="cms-workspace"><div class="cms-edit-panel"><div class="cms-panel-title"><h3 id="cmsCurrent">Tổng quan</h3><span>BẢN NHÁP</span></div><div id="cmsEditor"></div></div><div class="cms-preview-panel"><div class="cms-panel-title"><h3>Xem trước</h3><span>CHƯA XUẤT BẢN</span></div><div id="cmsLivePreview"></div><p>Bản xem trước nội dung; website thực tế sẽ giữ hiệu ứng riêng đang có.</p></div></div>';
+ '<div class="cms-workspace"><div class="cms-edit-panel"><div class="cms-panel-title"><h3 id="cmsCurrent">Tổng quan</h3><span>BẢN NHÁP</span></div><div id="cmsEditor"></div></div><div class="cms-preview-panel"><div class="cms-panel-title"><h3>Xem trước</h3><button type="button" id="cmsDevice" class="cms-btn">📱 Điện thoại</button></div><div id="cmsLivePreview"></div><p>Bản xem trước nội dung; website thực tế sẽ giữ hiệu ứng riêng đang có.</p></div></div>';
  parent.insertBefore(section,parent.firstChild);
  section.addEventListener("input",handleChanges);
  section.addEventListener("change",e=>{
@@ -216,6 +230,14 @@ function setupUI(){
  $("#cmsSave").addEventListener("click",saveDraft);
  $("#cmsPublish").addEventListener("click",publish);
  $("#cmsExport").addEventListener("click",downloadJson);
+ $("#cmsRestore").addEventListener("click",restorePublished);
+ $("#cmsImport").addEventListener("click",()=>$("#cmsImportFile").click());
+ $("#cmsImportFile").addEventListener("change",e=>{importJSON(e.target.files?.[0]);e.target.value="";});
+ $("#cmsDevice").addEventListener("click",()=>{
+   previewMobile=!previewMobile;
+   $("#cmsLivePreview").classList.toggle("cms-mobile",previewMobile);
+   $("#cmsDevice").textContent=previewMobile?"▣ Máy tính":"📱 Điện thoại";
+ });
  renderEditor();renderPreview();
 }
 window.addEventListener("nt3105:admin-auth",async event=>{

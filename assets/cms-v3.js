@@ -3,10 +3,10 @@
 "use strict";
 const KEY="main",BUCKET="nt3105-content";
 const groups=[
- ["overview","◈","Tổng quan"],["hero","▧","Đầu trang"],["about","♡","Về mình"],
+ ["overview","◈","Tổng quan"],["hero","▧","Đầu trang"],
  ["gallery","▦","Thư viện ảnh"],["music","♫","Âm nhạc"],["effects","✧","Hiệu ứng"],
  ["brand","◉","Thương hiệu"],["navigation","☷","Menu"],
- ["skills","◇","Kỹ năng"],["projects","▤","Dự án"],["journey","↗","Hành trình"],
+ ["skills","◇","Kỹ năng"],["projects","▤","Dự án"],
  ["contact","✉","Liên hệ"],["socials","◎","Mạng xã hội"],["theme","◐","Màu sắc"],
  ["layout","▥","Bố cục"],["seo","⌕","SEO"],["footer","⌑","Chân trang"],
  ["comments","☏","Bình luận"],["personal","☆","Góc riêng"],["code","</>","Góc code"],["donate","♧","Ủng hộ"]
@@ -40,7 +40,7 @@ about:[["title","Tiêu đề","text"],["body","Nội dung giới thiệu","texta
 music:[["enabled","Bật trình phát nhạc","check"]],
 effects:[["glass","Kính mờ Liquid Glass","check"],["reveal","Hiện dần khi cuộn","check"],["parallax","Parallax","check"],["glow","Ánh sáng tương tác","check"],["softMotion","Chuyển động đàn hồi","check"],["intensity","Cường độ hiệu ứng","range",0,100],["blur","Độ mờ kính","range",0,35]],
 brand:[["logoText","Chữ logo","text"],["tagline","Khẩu hiệu","text"],["favicon","Favicon","image"]],
-navigation:[["home","Mục Trang chủ","text"],["about","Mục Về mình","text"],["skills","Mục Kỹ năng","text"],["projects","Mục Dự án","text"],["contact","Mục Liên hệ","text"],["journey","Mục Hành trình","text"],["personal","Mục Góc riêng","text"],["code","Mục Góc code","text"],["donate","Mục Ủng hộ","text"],["social","Mục Mạng xã hội","text"]],
+navigation:[["home","Mục Trang chủ","text"],["skills","Mục Kỹ năng","text"],["projects","Mục Dự án","text"],["contact","Mục Liên hệ","text"],["personal","Mục Góc riêng","text"],["code","Mục Góc code","text"],["donate","Mục Ủng hộ","text"],["social","Mục Mạng xã hội","text"]],
 journey:[["title","Tiêu đề Hành trình","text"],["body","Nội dung","textarea"],["visible","Hiển thị","check"]],
 contact:[["title","Tiêu đề Liên hệ","text"],["description","Lời nhắn","textarea"],["email","Email công khai","text"],["visible","Hiển thị","check"]],
 socials:[["telegram","Telegram URL","url"],["facebook","Facebook URL","url"],["tiktok","TikTok URL","url"],["github","GitHub URL","url"]],
@@ -54,7 +54,7 @@ comments:[["enabled","Hiện phần bình luận","check"],["title","Tiêu đề
  projectsSettings:[["title","Tiêu đề dự án","text"]],
  socialsSettings:[["title","Tiêu đề liên kết mạng xã hội","text"]],
  personal:[["visible","Hiển thị Góc riêng","check"],["title","Tiêu đề Góc riêng","text"],["memoryTitle","Tiêu đề khung ảnh","text"],["memoryDescription","Mô tả khung ảnh","textarea"]],
- code:[["visible","Hiển thị Góc code","check"],["title","Tiêu đề Góc code","text"],["description","Giới thiệu Góc code","textarea"],["pythonHello","hello.py — Mã nguồn Python (để trống dùng mẫu)","textarea"],["pythonHelloOutput","hello.py — Kết quả Output (để trống dùng mẫu)","textarea"],["pythonIntro","intro.py — Mã nguồn Python (để trống dùng mẫu)","textarea"],["pythonIntroOutput","intro.py — Kết quả Output (để trống dùng mẫu)","textarea"],["pythonCalculator","calculator.py — Mã nguồn Python (để trống dùng mẫu)","textarea"],["pythonCalculatorOutput","calculator.py — Kết quả Output (để trống dùng mẫu)","textarea"]],
+ code:[["visible","Hiển thị Góc code","check"],["title","Tiêu đề Góc code","text"],["pythonHello","hello.py — Mã nguồn Python (để trống dùng mẫu)","textarea"],["pythonHelloOutput","hello.py — Kết quả Output (để trống dùng mẫu)","textarea"],["pythonIntro","intro.py — Mã nguồn Python (để trống dùng mẫu)","textarea"],["pythonIntroOutput","intro.py — Kết quả Output (để trống dùng mẫu)","textarea"],["pythonCalculator","calculator.py — Mã nguồn Python (để trống dùng mẫu)","textarea"],["pythonCalculatorOutput","calculator.py — Kết quả Output (để trống dùng mẫu)","textarea"]],
  donate:[["visible","Hiển thị mục ủng hộ","check"],["title","Tiêu đề mục ủng hộ","text"],["qrImage","Ảnh QR đang hiển thị (nếu có)","image"]]
 };
 const listSchemas={

@@ -15,3 +15,4 @@ jobs:
         run: |
           node --check assets/admin.js
           node --check assets/cms-v3.js
+          node tests/cms-live-preview-smoke.cjs

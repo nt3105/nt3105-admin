@@ -68,6 +68,25 @@ const clean=(s)=>String(s??"").replace(/[&<>"']/g,x=>({"&":"&amp;","<":"&lt;",">
 const validUrl=(s)=>{try{const u=new URL(s);return ["https:","http:"].includes(u.protocol)}catch{return false}};
 const safeAsset=(s)=>validUrl(s)?clean(s):"";
 const clone=o=>JSON.parse(JSON.stringify(o));
+const isHttpUrl=v=>{try{const u=new URL(String(v));return u.protocol==="https:"||u.protocol==="http:"}catch{return false}};
+function validateContent(content){
+ const errors=[];
+ const urlFields=[["hero","image"],["hero","primaryUrl"],["hero","secondaryUrl"],["brand","favicon"],["seo","ogImage"],["donate","qrImage"]];
+ for(const [group,key] of urlFields){
+  const val=content[group]?.[key];if(!val)continue;
+  if(group==="hero"&&key.endsWith("Url")&&/^#[a-zA-Z0-9_-]+$/.test(val))continue;
+  if(!isHttpUrl(val))errors.push(group+"."+key+" cần URL http/https hợp lệ.");
+ }
+ for(const [area,fields] of Object.entries({gallery:["src","thumb"],projects:["image","url","source"],tracks:["cover","src"],skills:["icon"]})){
+  const list=area==="tracks"?content.music?.tracks:content[area];
+  if(!Array.isArray(list))continue;
+  list.forEach((item,i)=>fields.forEach(key=>{const val=item?.[key];
+    if(val&&!isHttpUrl(val)&&!(key==="url"&&/^#[a-zA-Z0-9_-]+$/.test(val)))errors.push(area+" "+(i+1)+" — "+key+" không hợp lệ.");
+  }));
+ }
+ if(content.music?.tracks?.length>100||content.gallery?.length>100)errors.push("Danh sách vượt giới hạn 100 mục.");
+ return errors;
+}
 function merge(a,b){for(const [k,v] of Object.entries(b||{})){if(Array.isArray(v))a[k]=v;else if(v&&typeof v==="object")a[k]=Object.assign({},a[k]||{},v);else a[k]=v;}return a}
 function initial(){return clone(defaults)}
 let client=null,state=initial(),editingState=initial(),panel=null,tab="overview",lastPublished=null,loadOkay=false,publishing=false,previewMobile=true,pendingUploads=0;
@@ -198,6 +217,8 @@ function updatePendingUI(){
 function acceptChanges(){
  if(pendingUploads){toast("Đợi tệp ảnh hoặc nhạc tải xong rồi xác nhận.",true);return}
  if(!hasPendingChanges()){toast("Không có chỉnh sửa mới cần xác nhận.");return}
+ const errors=validateContent(editingState);
+ if(errors.length){toast("Không thể xác nhận: "+errors.slice(0,2).join(" "),true);return}
  state=clone(editingState);
  updatePendingUI();
  renderPreview();
@@ -262,7 +283,7 @@ async function uploadFile(input){
    const {error}=await client.storage.from(BUCKET).upload(filepath,file,{contentType:file.type,cacheControl:"3600",upsert:false});
    if(error)throw error;
    const {data}=client.storage.from(BUCKET).getPublicUrl(filepath);
-   const record=idx!==undefined?getList(area)[Number(idx)]:state[area];
+   const record=idx!==undefined?getList(area)[Number(idx)]:editingState[area];
    if(!record)throw Error("Mục đã bị xoá trong khi tải tệp.");
    record[key]=data.publicUrl;renderEditor();updatePendingUI();
    toast("✓ Đã tải tệp. Nhấn Xác nhận để thấy trên bản xem trước, sau đó Xuất bản khi hoàn tất.");
@@ -271,6 +292,8 @@ async function uploadFile(input){
 }
 async function saveDraft(){
  if(hasPendingChanges()){toast("Bạn còn chỉnh sửa chưa Xác nhận. Nhấn Xác nhận để cập nhật bản xem trước trước khi lưu.",true);return false}
+ const invalid=validateContent(state);
+ if(invalid.length){toast("Bản nháp chưa hợp lệ: "+invalid.slice(0,2).join(" "),true);return false}
  if(!client||!loadOkay){toast("Chưa kết nối CMS. Hãy chạy SQL migration trước.",true);return false}
  if(pendingUploads>0){toast("Đang tải ảnh/nhạc lên, hãy đợi tải xong rồi lưu.",true);return false}
  $("#cmsSave").disabled=true;
@@ -287,10 +310,16 @@ async function publish(){
  if(!await saveDraft())return;
  publishing=true;$("#cmsPublish").disabled=true;
  try{
-   const {error}=await client.from("nt3105_cms_published").upsert({id:KEY,content:{...state,__cmsReady:true},updated_at:new Date().toISOString()});
+   const payload={...clone(state),__cmsReady:true};
+   const {data,error}=await client.from("nt3105_cms_published").upsert({id:KEY,content:payload,updated_at:new Date().toISOString()}).select("content,updated_at").single();
    if(error)throw error;
+   if(!data||data.content?.__cmsReady!==true)throw Error("Supabase chưa xác nhận dữ liệu xuất bản.");
+   if(JSON.stringify(data.content)!==JSON.stringify(payload)){
+    // JSONB can return keys in different order; compare known values instead.
+    if(data.content.hero?.title!==payload.hero?.title)throw Error("Dữ liệu xuất bản không khớp với bản đã xác nhận.");
+   }
    lastPublished=clone(state);
-   toast("✓ Đã xuất bản lên nt3105.io.vn. Trang khách đang mở sẽ tự kiểm tra cập nhật.");
+   toast("✓ Supabase đã xác nhận xuất bản. Web chính sẽ nhận nội dung mới khi tải lại hoặc sau tối đa 30 giây.");
  }catch(e){console.error(e);toast("Xuất bản thất bại: "+String(e.message||e).slice(0,120),true)}
  finally{publishing=false;$("#cmsPublish").disabled=false}
 }
@@ -322,6 +351,8 @@ async function importJSON(file){
  try{
   const x=JSON.parse(await file.text());
   if(!x||typeof x!=="object"||Array.isArray(x))throw Error("Không phải cấu hình CMS hợp lệ.");
+  const unsafe=["__proto__","constructor","prototype"];
+  if(Object.keys(x).some(key=>unsafe.includes(key)))throw Error("Các thuộc tính JSON không được hỗ trợ.");
   const unknown=Object.keys(x).filter(k=>!Object.hasOwn(defaults,k));
   if(unknown.length)throw Error("Tệp có trường không hỗ trợ.");
   if(x.gallery&&!Array.isArray(x.gallery))throw Error("Gallery phải là mảng.");

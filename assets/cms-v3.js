@@ -57,7 +57,7 @@ const safeAsset=(s)=>validUrl(s)?clean(s):"";
 const clone=o=>JSON.parse(JSON.stringify(o));
 function merge(a,b){for(const [k,v] of Object.entries(b||{})){if(Array.isArray(v))a[k]=v;else if(v&&typeof v==="object")a[k]=Object.assign({},a[k]||{},v);else a[k]=v;}return a}
 function initial(){return clone(defaults)}
-let client=null,state=initial(),panel=null,tab="overview",lastPublished=null,loadOkay=false,publishing=false,previewMobile=false;
+let client=null,state=initial(),panel=null,tab="overview",lastPublished=null,loadOkay=false,publishing=false,previewMobile=false,pendingUploads=0;
 const toast=(s,isError=false)=>{const t=$("#cmsNotice");if(t){t.textContent=s;t.className="cms-notice "+(isError?"error":"");}};
 function makeField(area,key,label,type,min=0,max=100,idx=-1){
  const source=area==="tracks"?state.music.tracks:state[area];
@@ -139,7 +139,7 @@ async function uploadFile(input){
  const isAudio=key==="src"&&area==="tracks";
  const types=isAudio?["audio/mpeg","audio/wav","audio/ogg","audio/mp4"]:["image/jpeg","image/png","image/webp","image/gif"];
  if(!types.includes(file.type)||file.size>20*1024*1024){toast("Định dạng không hợp lệ hoặc vượt giới hạn 20 MB.",true);return}
- input.disabled=true;toast("Đang tải tệp lên Supabase Storage...");
+ pendingUploads++;input.disabled=true;toast("Đang tải tệp lên Supabase Storage...");
  const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,6);
  const dir=area==="tracks"?(key==="cover"?"covers":"music"):area==="gallery"?"gallery":area;
  const filepath=dir+"/"+crypto.randomUUID()+"."+ext;
@@ -152,10 +152,11 @@ async function uploadFile(input){
    record[key]=data.publicUrl;renderEditor();renderPreview();
    toast("✓ Đã tải lên. Hãy lưu nháp và xuất bản khi sẵn sàng.");
  }catch(e){console.error(e);toast("Không tải được: "+String(e.message||e).slice(0,100),true)}
- finally{input.disabled=false}
+ finally{pendingUploads=Math.max(0,pendingUploads-1); if(input.isConnected)input.disabled=false}
 }
 async function saveDraft(){
  if(!client||!loadOkay){toast("Chưa kết nối CMS. Hãy chạy SQL migration trước.",true);return false}
+ if(pendingUploads>0){toast("Đang tải ảnh/nhạc lên, hãy đợi tải xong rồi lưu.",true);return false}
  $("#cmsSave").disabled=true;
  try{
    const {error}=await client.from("nt3105_cms_drafts").upsert({id:KEY,content:state,updated_at:new Date().toISOString()});
@@ -203,6 +204,12 @@ async function importJSON(file){
  try{
   const x=JSON.parse(await file.text());
   if(!x||typeof x!=="object"||Array.isArray(x))throw Error("Không phải cấu hình CMS hợp lệ.");
+  const unknown=Object.keys(x).filter(k=>!Object.hasOwn(defaults,k));
+  if(unknown.length)throw Error("Tệp có trường không hỗ trợ.");
+  if(x.gallery&&!Array.isArray(x.gallery))throw Error("Gallery phải là mảng.");
+  if(x.skills&&!Array.isArray(x.skills))throw Error("Skills phải là mảng.");
+  if(x.projects&&!Array.isArray(x.projects))throw Error("Projects phải là mảng.");
+  if(x.music?.tracks&&!Array.isArray(x.music.tracks))throw Error("Playlist phải là mảng.");
   if(!confirm("Thay toàn bộ bản nháp hiện tại bằng dữ liệu JSON?"))return;
   state=merge(initial(),x);renderEditor();renderPreview();toast("✓ Đã nhập vào bản xem trước. Hãy Lưu nháp để lưu.");
  }catch(error){console.error(error);toast("Không đọc được tệp JSON hợp lệ.",true)}
@@ -210,7 +217,7 @@ async function importJSON(file){
 function setupUI(){
  const parent=$("#portal");if(!parent||$("#cmsStudio"))return;
  const section=document.createElement("section");section.id="cmsStudio";section.className="cms-studio glass";
- section.innerHTML='<div class="cms-head"><div><span class="cms-kicker">CONTENT STUDIO · V3 PREVIEW</span><h2>Quản trị website</h2><p>Sửa nội dung · Xem trước · Lưu nháp · Xuất bản</p></div><div class="cms-actions"><button type="button" id="cmsExport" class="cms-btn">↓ JSON</button><button type="button" id="cmsImport" class="cms-btn">↑ Nhập JSON</button><input id="cmsImportFile" type="file" accept="application/json,.json" hidden><button type="button" id="cmsRestore" class="cms-btn">↶ Bản đã xuất bản</button><button type="button" id="cmsSave" class="cms-btn">Lưu nháp</button><button type="button" id="cmsPublish" class="cms-btn cms-primary">Xuất bản ↗</button></div></div>'+
+ section.innerHTML='<div class="cms-head"><div><span class="cms-kicker">CONTENT STUDIO · V3</span><h2>Quản trị website</h2><p>Sửa nội dung · Xem trước · Lưu nháp · Xuất bản</p></div><div class="cms-actions"><button type="button" id="cmsExport" class="cms-btn">↓ JSON</button><button type="button" id="cmsImport" class="cms-btn">↑ Nhập JSON</button><input id="cmsImportFile" type="file" accept="application/json,.json" hidden><button type="button" id="cmsRestore" class="cms-btn">↶ Bản đã xuất bản</button><button type="button" id="cmsSave" class="cms-btn">Lưu nháp</button><button type="button" id="cmsPublish" class="cms-btn cms-primary">Xuất bản ↗</button></div></div>'+
  '<div id="cmsNotice" class="cms-notice" role="status" aria-live="polite">Đang xác thực kết nối CMS...</div>'+
  '<div class="cms-tabs" role="navigation" aria-label="Chuyên mục Admin">'+groups.map(g=>'<button class="cms-tab'+(g[0]==="overview"?" active":"")+'" type="button" data-tab="'+g[0]+'"><span>'+g[1]+'</span> '+g[2]+'</button>').join("")+'</div>'+
  '<div class="cms-workspace"><div class="cms-edit-panel"><div class="cms-panel-title"><h3 id="cmsCurrent">Tổng quan</h3><span>BẢN NHÁP</span></div><div id="cmsEditor"></div></div><div class="cms-preview-panel"><div class="cms-panel-title"><h3>Xem trước</h3><button type="button" id="cmsDevice" class="cms-btn">📱 Điện thoại</button></div><div id="cmsLivePreview"></div><p>Bản xem trước nội dung; website thực tế sẽ giữ hiệu ứng riêng đang có.</p></div></div>';
@@ -241,7 +248,7 @@ function setupUI(){
  renderEditor();renderPreview();
 }
 window.addEventListener("nt3105:admin-auth",async event=>{
- if(!event.detail?.active){client=null;loadOkay=false;state=initial();lastPublished=null;document.getElementById("cmsStudio")?.remove();return}
+ if(!event.detail?.active){client=null;loadOkay=false;state=initial();lastPublished=null;pendingUploads=0;document.getElementById("cmsStudio")?.remove();return}
  client=event.detail.client;setupUI();await loadData();
 });
 })();

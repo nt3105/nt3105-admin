@@ -57,7 +57,8 @@ const safeAsset=(s)=>validUrl(s)?clean(s):"";
 const clone=o=>JSON.parse(JSON.stringify(o));
 function merge(a,b){for(const [k,v] of Object.entries(b||{})){if(Array.isArray(v))a[k]=v;else if(v&&typeof v==="object")a[k]=Object.assign({},a[k]||{},v);else a[k]=v;}return a}
 function initial(){return clone(defaults)}
-let client=null,state=initial(),panel=null,tab="overview",lastPublished=null,loadOkay=false,publishing=false,previewMobile=false,pendingUploads=0;
+let client=null,state=initial(),panel=null,tab="overview",lastPublished=null,loadOkay=false,publishing=false,previewMobile=true,pendingUploads=0;
+let previewFrameReady=false,previewRefreshTimer=null,previewResizeObserver=null;
 const toast=(s,isError=false)=>{const t=$("#cmsNotice");if(t){t.textContent=s;t.className="cms-notice "+(isError?"error":"");}};
 function makeField(area,key,label,type,min=0,max=100,idx=-1){
  const source=area==="tracks"?state.music.tracks:state[area];
@@ -92,24 +93,67 @@ function renderEditor(){
  (tab==="music"?listEditor("tracks","Danh sách bài hát"):"")+
  (tab==="comments"?'<p class="cms-info">Bảng kiểm duyệt bình luận gốc vẫn ở bên dưới. Cấu hình này chỉ kiểm soát cách hiện nhận xét trên website chính.</p>':"");
 }
-function renderPreview(){
- const p=$("#cmsLivePreview");if(!p)return;
- const accent=state.theme.accent||"#a6b9ff",cover=safeAsset(state.hero.image);
- p.style.setProperty("--cms-preview-accent",accent);
- p.style.borderRadius=Number(state.layout.radius||18)+"px";
- p.innerHTML='<div class="cms-preview-hero" style="'+(cover?'background-image:linear-gradient(90deg,rgba(0,0,0,.6),rgba(0,0,0,.25)),url(\''+cover+'\');':'')+'background-position:center '+Number(state.hero.position||50)+'%">'+
- '<div class="cms-preview-logo">'+clean(state.brand.logoText)+'</div><small>'+clean(state.brand.tagline)+'</small>'+
- '<h2>'+clean(state.hero.title||"Trang chủ")+'</h2><p>'+clean(state.hero.subtitle||"")+'</p></div>'+
- '<div class="cms-preview-about"><h3>'+clean(state.about.title)+'</h3><p>'+clean(state.about.body||"Bạn có thể chỉnh nội dung từ bảng quản trị.")+'</p></div>'+
- '<div class="cms-preview-gallery">'+state.gallery.filter(x=>x.visible!==false).slice(0,5).map(x=>'<div>'+ (safeAsset(x.src)?'<img src="'+safeAsset(x.src)+'" alt="'+clean(x.title||"Ảnh")+'">':'<span>▦</span>') +'<small>'+clean(x.title||"Ảnh")+'</small></div>').join("")+'</div>'+
- '<div class="cms-preview-bottom">♫ '+clean(state.music.tracks[0]?.title||"Playlist")+'　·　'+clean(state.footer.text)+'</div>';
+const PUBLIC_ORIGIN="https://nt3105.io.vn";
+const previewSection={overview:"hero",hero:"hero",about:"about",gallery:"gallery",
+ music:"music",effects:"effects",brand:"brand",navigation:"navigation",skills:"skills",
+ projects:"projects",journey:"journey",contact:"contact",socials:"socials",theme:"theme",
+ layout:"layout",seo:"seo",footer:"footer",comments:"comments"};
+function previewStatus(text,error=false){
+ const el=$("#cmsPreviewStatus");if(!el)return;
+ el.textContent=text;el.classList.toggle("error",Boolean(error));
 }
+function sendPreview(type,extra={}){
+ const iframe=$("#cmsWebsiteFrame");
+ if(!previewFrameReady||!iframe?.contentWindow)return;
+ iframe.contentWindow.postMessage({type,...extra},PUBLIC_ORIGIN);
+}
+function renderPreview(){
+ clearTimeout(previewRefreshTimer);
+ previewRefreshTimer=setTimeout(()=>{
+  sendPreview("nt3105:cms-preview-update",{content:clone(state)});
+ },95);
+}
+function previewNavigate(section,field=""){
+ sendPreview("nt3105:cms-preview-navigate",{section:previewSection[section]||"hero",field});
+}
+function resizePreviewFrame(){
+ const viewport=$("#cmsPreviewViewport"),iframe=$("#cmsWebsiteFrame");
+ if(!viewport||!iframe)return;
+ const mobile=previewMobile;
+ const baseWidth=mobile?390:1280,baseHeight=mobile?840:1400;
+ const available=viewport.clientWidth||350;
+ const zoom=Math.min(1,available/baseWidth);
+ iframe.style.width=baseWidth+"px";
+ iframe.style.height=baseHeight+"px";
+ iframe.style.transform="scale("+zoom+")";
+ viewport.style.height=Math.round(baseHeight*zoom)+"px";
+}
+function onPreviewMessage(event){
+ if(event.origin!==PUBLIC_ORIGIN||event.source!==$("#cmsWebsiteFrame")?.contentWindow)return;
+ if(!$("#cmsStudio")||!client||!event.data||typeof event.data!=="object")return;
+ if(event.data.type==="nt3105:cms-preview-ready"){
+   previewFrameReady=true;
+   previewStatus("● Đang xem trực tiếp giao diện website chính");
+   renderPreview();
+   setTimeout(()=>previewNavigate(tab),220);
+ }
+ if(event.data.type==="nt3105:cms-preview-applied"){
+   previewStatus("✓ Bản xem trước đã cập nhật · Chưa xuất bản");
+ }
+ if(event.data.type==="nt3105:cms-preview-select"){
+   const section=String(event.data.section||"");
+   if(groups.some(g=>g[0]===section)&&section!==tab)switchTab(section);
+ }
+}
+window.addEventListener("message",onPreviewMessage);
 function switchTab(name){
+ if(!groups.some(g=>g[0]===name))return;
  tab=name;
  document.querySelectorAll(".cms-tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
  $("#cmsCurrent").textContent=groups.find(x=>x[0]===tab)?.[2]||"";
- renderEditor();renderPreview();
- if(name==="comments")$("#commentList")?.scrollIntoView({behavior:"smooth",block:"nearest"});
+ renderEditor();
+ renderPreview();
+ previewNavigate(tab);
 }
 function getList(area){return area==="tracks"?state.music.tracks:state[area]}
 function handleChanges(event){
@@ -220,7 +264,7 @@ function setupUI(){
  section.innerHTML='<div class="cms-head"><div><span class="cms-kicker">CONTENT STUDIO · V3</span><h2>Quản trị website</h2><p>Sửa nội dung · Xem trước · Lưu nháp · Xuất bản</p></div><div class="cms-actions"><button type="button" id="cmsExport" class="cms-btn">↓ JSON</button><button type="button" id="cmsImport" class="cms-btn">↑ Nhập JSON</button><input id="cmsImportFile" type="file" accept="application/json,.json" hidden><button type="button" id="cmsRestore" class="cms-btn">↶ Bản đã xuất bản</button><button type="button" id="cmsSave" class="cms-btn">Lưu nháp</button><button type="button" id="cmsPublish" class="cms-btn cms-primary">Xuất bản ↗</button></div></div>'+
  '<div id="cmsNotice" class="cms-notice" role="status" aria-live="polite">Đang xác thực kết nối CMS...</div>'+
  '<div class="cms-tabs" role="navigation" aria-label="Chuyên mục Admin">'+groups.map(g=>'<button class="cms-tab'+(g[0]==="overview"?" active":"")+'" type="button" data-tab="'+g[0]+'"><span>'+g[1]+'</span> '+g[2]+'</button>').join("")+'</div>'+
- '<div class="cms-workspace"><div class="cms-edit-panel"><div class="cms-panel-title"><h3 id="cmsCurrent">Tổng quan</h3><span>BẢN NHÁP</span></div><div id="cmsEditor"></div></div><div class="cms-preview-panel"><div class="cms-panel-title"><h3>Xem trước</h3><button type="button" id="cmsDevice" class="cms-btn">📱 Điện thoại</button></div><div id="cmsLivePreview"></div><p>Bản xem trước nội dung; website thực tế sẽ giữ hiệu ứng riêng đang có.</p></div></div>';
+ '<div class="cms-workspace"><div class="cms-edit-panel"><div class="cms-panel-title"><h3 id="cmsCurrent">Tổng quan</h3><span>BẢN NHÁP</span></div><div id="cmsEditor"></div></div><div class="cms-preview-panel"><div class="cms-panel-title"><h3>Xem trước</h3><div class="cms-preview-toolbar"><button type="button" id="cmsExpand" class="cms-btn">⤢ Mở rộng</button><button type="button" id="cmsDevice" class="cms-btn">▣ Máy tính</button><a class="cms-btn" href="https://nt3105.io.vn/" target="_blank" rel="noopener noreferrer">↗ Web chính</a></div></div><div class="cms-preview-status" id="cmsPreviewStatus" role="status" aria-live="polite">Đang kết nối bản xem trước với website thật...</div><div id="cmsLivePreview" class="cms-mobile"><div class="cms-preview-viewport" id="cmsPreviewViewport"><iframe title="Website nt3105.io.vn · bản xem trước theo thời gian thực" id="cmsWebsiteFrame" src="https://nt3105.io.vn/?nt3105_preview=1&amp;cms_ui=v4" sandbox="allow-scripts allow-same-origin" referrerpolicy="strict-origin-when-cross-origin" loading="eager"></iframe></div></div><p>Đây là giao diện website thật. Chọn mục bên trái hoặc bấm vào website để sửa. Mọi thay đổi chỉ công khai sau khi nhấn Xuất bản.</p></div></div>';
  parent.insertBefore(section,parent.firstChild);
  section.addEventListener("input",handleChanges);
  section.addEventListener("change",e=>{
@@ -244,11 +288,34 @@ function setupUI(){
    previewMobile=!previewMobile;
    $("#cmsLivePreview").classList.toggle("cms-mobile",previewMobile);
    $("#cmsDevice").textContent=previewMobile?"▣ Máy tính":"📱 Điện thoại";
+   resizePreviewFrame();
+ });
+ $("#cmsExpand").addEventListener("click",()=>{
+   const expanded=$("#cmsStudio").classList.toggle("cms-expanded");
+   $("#cmsExpand").textContent=expanded?"⤡ Thu gọn":"⤢ Mở rộng";
+   setTimeout(resizePreviewFrame,60);
+ });
+ previewResizeObserver?.disconnect();
+ if("ResizeObserver" in window){
+   previewResizeObserver=new ResizeObserver(resizePreviewFrame);
+   previewResizeObserver.observe($("#cmsPreviewViewport"));
+ }
+ window.addEventListener("resize",resizePreviewFrame,{passive:true});
+ setTimeout(resizePreviewFrame,20);
+ setTimeout(()=>{
+   if(!previewFrameReady&&$("#cmsStudio"))previewStatus("Chưa nhận được phản hồi từ web chính. Kiểm tra mạng hoặc mở thử bằng nút ↗ Web chính.",true);
+ },12000);
+ section.addEventListener("focusin",event=>{
+   const field=event.target.closest("[data-area][data-key],[data-upload-area][data-upload-key]");
+   if(!field)return;
+   const sectionName=field.dataset.area||field.dataset.uploadArea||tab;
+   const fieldName=field.dataset.key||field.dataset.uploadKey||"";
+   previewNavigate(sectionName==="tracks"?"music":sectionName,fieldName);
  });
  renderEditor();renderPreview();
 }
 window.addEventListener("nt3105:admin-auth",async event=>{
- if(!event.detail?.active){client=null;loadOkay=false;state=initial();lastPublished=null;pendingUploads=0;document.getElementById("cmsStudio")?.remove();return}
- client=event.detail.client;setupUI();await loadData();
+ if(!event.detail?.active){client=null;loadOkay=false;state=initial();lastPublished=null;pendingUploads=0;previewFrameReady=false;clearTimeout(previewRefreshTimer);previewResizeObserver?.disconnect();document.getElementById("cmsStudio")?.remove();return}
+ client=event.detail.client;previewFrameReady=false;setupUI();await loadData();
 });
 })();

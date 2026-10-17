@@ -118,7 +118,7 @@ function renderEditor(){
  const root=$("#cmsEditor");if(!root)return;
  if(tab==="overview"){
    root.innerHTML='<h2>Bảng điều khiển nội dung</h2><p>Chỉnh trên Admin → Lưu bản nháp → Xem trước → Xuất bản. Mọi thay đổi chỉ xuất hiện trên website công khai sau khi xuất bản.</p>'+
-   '<div class="cms-metrics"><div><strong>18</strong><span>Phần quản trị</span></div><div><strong>'+state.gallery.length+'</strong><span>Ảnh</span></div><div><strong>'+state.music.tracks.length+'</strong><span>Bài hát</span></div></div>'+
+   '<div class="cms-metrics"><div><strong>'+groups.length+'</strong><span>Phần quản trị</span></div><div><strong>'+editingState.gallery.length+'</strong><span>Ảnh</span></div><div><strong>'+editingState.music.tracks.length+'</strong><span>Bài hát</span></div></div>'+
    '<div class="cms-info">Bảo mật: Supabase RLS chỉ cho tài khoản Admin có quyền cập nhật. Ảnh và nhạc tải lên bucket công khai; không tải tệp riêng tư.</div>';
    return;
  }

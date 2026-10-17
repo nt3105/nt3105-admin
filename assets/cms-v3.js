@@ -138,7 +138,7 @@ function onPreviewMessage(event){
    setTimeout(()=>previewNavigate(tab),220);
  }
  if(event.data.type==="nt3105:cms-preview-applied"){
-   previewStatus("✓ Bản xem trước đã cập nhật · Chưa xuất bản");
+   previewStatus("✓ Đã cập nhật trực tiếp trong bản xem trước · Chưa xuất bản");
  }
  if(event.data.type==="nt3105:cms-preview-select"){
    const section=String(event.data.section||"");
@@ -298,7 +298,7 @@ function setupUI(){
  previewResizeObserver?.disconnect();
  if("ResizeObserver" in window){
    previewResizeObserver=new ResizeObserver(resizePreviewFrame);
-   previewResizeObserver.observe($("#cmsPreviewViewport"));
+   previewResizeObserver.observe($("#cmsLivePreview"));
  }
  window.addEventListener("resize",resizePreviewFrame,{passive:true});
  setTimeout(resizePreviewFrame,20);

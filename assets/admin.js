@@ -95,31 +95,65 @@
     if (error) { console.error(error); toast('Không thể tải bình luận. Kiểm tra quyền Admin.'); return; }
     comments = data || []; render();
   }
+  function readableAuthError(error) {
+    const code = String(error?.code || '').toLowerCase();
+    const description = String(error?.message || '').toLowerCase();
+    if (code === 'invalid_credentials' || description.includes('invalid login credentials')) {
+      return 'Supabase từ chối thông tin đăng nhập. Hãy kiểm tra email và mật khẩu của tài khoản Authentication → Users (không phải mật khẩu Database).';
+    }
+    if (code === 'email_not_confirmed' || description.includes('email not confirmed')) {
+      return 'Email chưa được xác nhận trong Supabase Authentication → Users.';
+    }
+    if (code === 'over_request_rate_limit' || code === 'over_email_send_rate_limit' || description.includes('too many requests')) {
+      return 'Supabase đang giới hạn số lần thử. Vui lòng đợi rồi thử lại.';
+    }
+    if (description.includes('failed to fetch') || description.includes('network') || description.includes('fetch failed')) {
+      return 'Không kết nối được tới máy chủ Supabase. Kiểm tra mạng rồi thử lại.';
+    }
+    return 'Supabase báo lỗi xác thực' + (code ? ' (' + code + ')' : '') + '. Hãy kiểm tra Authentication → Users.';
+  }
   async function login(event) {
     event.preventDefault();
     if (!db) return;
-    const submit = $('#loginBtn'); submit.disabled = true;
+    const submit = $('#loginBtn');
+    submit.disabled = true;
     $('#loginError').textContent = '';
     try {
-      const { error } = await db.auth.signInWithPassword({
+      // 1. Xác thực email/mật khẩu bằng Supabase Auth.
+      const { error: authError } = await db.auth.signInWithPassword({
         email: $('#email').value.trim(), password: $('#password').value
       });
-      if (error) throw error;
-      const { data, error: permissionError } = await db.rpc('is_site_comment_admin');
-      if (permissionError || data !== true) {
-        await db.auth.signOut();
-        throw new Error('No admin permission');
+      if (authError) {
+        $('#loginError').textContent = readableAuthError(authError);
+        return;
       }
+
+      // 2. Kiểm tra quyền trên database, không tin vào giao diện.
+      const { data: isAdmin, error: permissionError } = await db.rpc('is_site_comment_admin');
+      if (permissionError) {
+        console.error('Supabase admin RPC check failed:', permissionError);
+        await db.auth.signOut();
+        $('#loginError').textContent = 'Email/mật khẩu đã được chấp nhận, nhưng truy vấn quyền Admin bị lỗi. Kiểm tra hàm is_site_comment_admin trong SQL Editor.';
+        return;
+      }
+      if (isAdmin !== true) {
+        await db.auth.signOut();
+        $('#loginError').textContent = 'Đăng nhập đúng nhưng tài khoản chưa được cấp quyền Admin trong bảng site_comment_admins.';
+        return;
+      }
+
       $('#password').value = '';
       showPortal(true);
       await refresh();
       toast('✓ Đã mở bảng quản trị.');
     } catch (error) {
-      console.error(error);
-      $('#loginError').textContent = 'Không đăng nhập được. Kiểm tra tài khoản và quyền Admin.';
-    } finally { submit.disabled = false; }
+      console.error('Unexpected Supabase login error:', error);
+      $('#loginError').textContent = 'Lỗi kết nối hoặc xử lý đăng nhập. Hãy tải lại trang và thử lần nữa.';
+    } finally {
+      submit.disabled = false;
+    }
   }
-  async function logout() {
+    async function logout() {
     showPortal(false); comments = []; filter = 'all';
     try { await db?.auth.signOut(); } catch (error) { console.error(error); }
     $('#password').value = '';

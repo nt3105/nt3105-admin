@@ -12,7 +12,7 @@ const groups=[
  ["comments","☏","Bình luận"],["personal","☆","Góc riêng"],["code","</>","Góc code"],["donate","♧","Ủng hộ"]
 ];
 const defaults={
- hero:{title:"Xin chào, mình là Ngân Tú Dev.",subtitle:"Đang học lập trình và khám phá công nghệ.",image:"",position:50,overlay:35,visible:true},
+ hero:{title:"Xin chào, mình là Ngân Tú Dev.",subtitle:"Đang học lập trình và khám phá công nghệ.",image:"",position:50,overlay:35,visible:true,roles:"",primaryLabel:"",primaryUrl:"",secondaryLabel:"",secondaryUrl:""},
  about:{title:"Một chút về mình",body:"",visible:false},
  gallery:[],gallerySettings:{title:"Một chút ngoài những dòng code.",subtitle:"NHỮNG KHOẢNH KHẮC CỦA MÌNH"},
  skillsSettings:{title:"Kỹ năng & công cụ.",description:"Những ngôn ngữ và công cụ mình đang thực hành."},
@@ -25,7 +25,7 @@ const defaults={
  journey:{title:"Hành trình",body:"",visible:true},
  contact:{title:"Kết nối với mình",description:"",email:"",visible:true},
  socials:{telegram:"",facebook:"",tiktok:"",github:""},
- theme:{accent:"#a6b9ff",surface:"#111728",text:"#f6f8ff",light:false},
+ theme:{accent:"#a6b9ff",background:"#080b14",surface:"#111728",text:"#f6f8ff",light:false},
  layout:{radius:22,spacing:24,cardColumns:3},
  seo:{title:"NT3105 | Website cá nhân",description:"Lập trình và những dự án của NT3105.",ogImage:""},
  footer:{text:"© 2026 NT3105",credit:"Made with HTML, CSS & JavaScript"},
@@ -35,7 +35,7 @@ const defaults={
  donate:{visible:true,title:"Góp gió thành bão.",qrImage:""}
 };
 const schema={
-hero:[["title","Tiêu đề","text"],["subtitle","Mô tả đầu trang","textarea"],["image","Ảnh đầu trang","image"],["position","Vị trí ảnh (%)","range",0,100],["overlay","Độ tối lớp phủ (%)","range",0,90],["visible","Hiện đầu trang","check"]],
+hero:[["title","Tiêu đề","text"],["subtitle","Mô tả đầu trang","textarea"],["image","Ảnh đầu trang","image"],["position","Vị trí ảnh (%)","range",0,100],["overlay","Độ tối lớp phủ (%)","range",0,90],["visible","Hiện đầu trang","check"],["roles","Vai trò luân phiên (cách nhau bằng dấu phẩy)","textarea"],["primaryLabel","Chữ nút chính","text"],["primaryUrl","Liên kết nút chính (https:// hoặc #mục)","text"],["secondaryLabel","Chữ nút phụ","text"],["secondaryUrl","Liên kết nút phụ","text"]],
 about:[["title","Tiêu đề","text"],["body","Nội dung giới thiệu","textarea"],["visible","Hiện phần Về mình","check"]],
 music:[["enabled","Bật trình phát nhạc","check"]],
 effects:[["glass","Kính mờ Liquid Glass","check"],["reveal","Hiện dần khi cuộn","check"],["parallax","Parallax","check"],["glow","Ánh sáng tương tác","check"],["softMotion","Chuyển động đàn hồi","check"],["intensity","Cường độ hiệu ứng","range",0,100],["blur","Độ mờ kính","range",0,35]],
@@ -44,7 +44,7 @@ navigation:[["home","Mục Trang chủ","text"],["about","Mục Về mình","tex
 journey:[["title","Tiêu đề Hành trình","text"],["body","Nội dung","textarea"],["visible","Hiển thị","check"]],
 contact:[["title","Tiêu đề Liên hệ","text"],["description","Lời nhắn","textarea"],["email","Email công khai","text"],["visible","Hiển thị","check"]],
 socials:[["telegram","Telegram URL","url"],["facebook","Facebook URL","url"],["tiktok","TikTok URL","url"],["github","GitHub URL","url"]],
-theme:[["accent","Màu nhấn","color"],["surface","Nền tối","color"],["text","Màu chữ","color"],["light","Chế độ sáng","check"]],
+theme:[["accent","Màu nhấn","color"],["background","Màu nền tổng thể","color"],["surface","Nền tối","color"],["text","Màu chữ","color"],["light","Chế độ sáng","check"]],
 layout:[["radius","Độ bo góc","range",0,44],["spacing","Khoảng cách","range",8,52],["cardColumns","Số cột thẻ","range",1,4]],
 seo:[["title","Tiêu đề SEO","text"],["description","Mô tả SEO","textarea"],["ogImage","Ảnh chia sẻ","image"]],
 footer:[["text","Bản quyền","text"],["credit","Dòng ghi chú","text"]],

@@ -1,7 +1,6 @@
-// Supabase chỉ dùng Project URL và publishable key công khai.
-// KHÔNG đưa service_role key, secret key hay mật khẩu Admin lên GitHub.
-// Cấu hình theo README.md trong bộ ZIP.
+// Public frontend Supabase connection. Access control is enforced by RLS.
+// Never place a database password, secret key, or service_role key in this file.
 window.NT3105_CONFIG = {
-  supabaseUrl: '',
-  supabasePublishableKey: ''
+  supabaseUrl: "https://oyogarwaylhfupcrrfyq.supabase.co",
+  supabasePublishableKey: "sb_publishable_UWm-gQGorsvOGOksKL0BHg_rR265JRi"
 };

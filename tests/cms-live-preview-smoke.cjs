@@ -22,7 +22,10 @@ assert(editor.includes('id="cmsReload"'),'Preview has a retry control when conne
 assert(editor.includes('nt3105:cms-preview-navigate'),'Selecting an editor field should navigate site preview');
 assert(editor.includes('nt3105:cms-preview-select'),'Clicking a website section should select the corresponding editor section');
 assert(editor.includes('resizePreviewFrame'),'Desktop/mobile preview should resize');
-assert(editor.includes('content:{...state,__cmsReady:true}'),'Only explicit Admin Publish may activate a public revision');
+assert(editor.includes('const payload={...clone(state),__cmsReady:true}'),'Only explicit Admin Publish may activate a public revision');
+assert(editor.includes('if(hasPendingChanges()){toast("Hãy nhấn Xác nhận'),'Unconfirmed edits must block publishing');
+assert(editor.includes('const record=idx!==undefined?getList(area)[Number(idx)]:editingState[area]'),'Uploaded files must remain staged until confirmation');
+assert(editor.includes('select("content,updated_at").single()'),'Publishing should verify the database response');
 assert(!editor.includes('p.innerHTML=\'<div class="cms-preview-hero"'),'Legacy fake mini-site preview must be removed');
 
 const vm=require('node:vm');

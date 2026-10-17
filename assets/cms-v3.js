@@ -68,7 +68,7 @@ const clean=(s)=>String(s??"").replace(/[&<>"']/g,x=>({"&":"&amp;","<":"&lt;",">
 const validUrl=(s)=>{try{const u=new URL(s);return ["https:","http:"].includes(u.protocol)}catch{return false}};
 const safeAsset=(s)=>validUrl(s)?clean(s):"";
 const clone=o=>JSON.parse(JSON.stringify(o));
-const isHttpUrl=v=>{try{const u=new URL(String(v));return u.protocol==="https:"||u.protocol==="http:"}catch{return false}};
+const isHttpUrl=v=>{try{const u=new URL(String(v));return u.protocol==="https:"}catch{return false}};
 function validateContent(content){
  const errors=[];
  const urlFields=[["hero","image"],["hero","primaryUrl"],["hero","secondaryUrl"],["brand","favicon"],["seo","ogImage"],["donate","qrImage"]];
@@ -76,6 +76,11 @@ function validateContent(content){
   const val=content[group]?.[key];if(!val)continue;
   if(group==="hero"&&key.endsWith("Url")&&/^#[a-zA-Z0-9_-]+$/.test(val))continue;
   if(!isHttpUrl(val))errors.push(group+"."+key+" cần URL http/https hợp lệ.");
+ }
+ if(content.socials){
+  for(const [kind,url] of Object.entries(content.socials)){
+    if(url&&!isHttpUrl(url))errors.push("Mạng xã hội "+kind+": cần liên kết HTTPS.");
+  }
  }
  for(const [area,fields] of Object.entries({gallery:["src","thumb"],projects:["image","url","source"],tracks:["cover","src"],skills:["icon"]})){
   const list=area==="tracks"?content.music?.tracks:content[area];

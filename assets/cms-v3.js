@@ -31,7 +31,7 @@ const defaults={
  footer:{text:"© 2026 NT3105",credit:"Made with HTML, CSS & JavaScript"},
  comments:{enabled:true,title:"Lời nhắn từ khách"},
  personal:{visible:true,title:"Một chút về sở thích của mình.",memoryTitle:"Giữ lại một khoảnh khắc.",memoryDescription:"Những tấm ảnh ngoài màn hình code."},
- code:{visible:true,title:"Góc code.",description:"Những ví dụ nhỏ để đọc, thử và học. Chọn ngôn ngữ rồi sao chép để chạy trên máy."},
+ code:{visible:true,title:"Góc code.",description:"Những ví dụ nhỏ để đọc, thử và học. Chọn ngôn ngữ rồi sao chép để chạy trên máy.",c:"",objc:"",swift:"",cOutput:"",objcOutput:"",swiftOutput:""},
  donate:{visible:true,title:"Góp gió thành bão.",qrImage:""}
 };
 const schema={
@@ -54,7 +54,7 @@ comments:[["enabled","Hiện phần bình luận","check"],["title","Tiêu đề
  projectsSettings:[["title","Tiêu đề dự án","text"]],
  socialsSettings:[["title","Tiêu đề liên kết mạng xã hội","text"]],
  personal:[["visible","Hiển thị Góc riêng","check"],["title","Tiêu đề Góc riêng","text"],["memoryTitle","Tiêu đề khung ảnh","text"],["memoryDescription","Mô tả khung ảnh","textarea"]],
- code:[["visible","Hiển thị Góc code","check"],["title","Tiêu đề Góc code","text"],["description","Giới thiệu Góc code","textarea"]],
+ code:[["visible","Hiển thị Góc code","check"],["title","Tiêu đề Góc code","text"],["description","Giới thiệu Góc code","textarea"],["c","Ví dụ C (mã nguồn)","textarea"],["cOutput","Kết quả mô phỏng C","textarea"],["objc","Ví dụ Objective-C (mã nguồn)","textarea"],["objcOutput","Kết quả mô phỏng Objective-C","textarea"],["swift","Ví dụ Swift (mã nguồn)","textarea"],["swiftOutput","Kết quả mô phỏng Swift","textarea"]],
  donate:[["visible","Hiển thị mục ủng hộ","check"],["title","Tiêu đề mục ủng hộ","text"],["qrImage","Ảnh QR đang hiển thị (nếu có)","image"]]
 };
 const listSchemas={

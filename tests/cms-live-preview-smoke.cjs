@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const editor=fs.readFileSync('assets/cms-v3.js','utf8');
 const html=fs.readFileSync('index.html','utf8');
 new Function(editor);
-assert(html.includes('assets/cms-v3.js?v=cms-confirm-preview-5'),'Published Admin must use latest Studio JS');
+assert(html.includes('assets/cms-v3.js?v=cms-full-audit-6'),'Published Admin must use latest Studio JS');
 assert(editor.includes('nt3105_preview=1'),'Preview must load the actual website in Studio mode');
 assert(editor.includes('id="cmsWebsiteFrame"'),'Studio must have a real website iframe');
 assert(editor.includes('sandbox="allow-scripts allow-same-origin"'),'Embed must be sandboxed');
@@ -26,6 +26,7 @@ assert(editor.includes('const payload={...clone(state),__cmsReady:true}'),'Only 
 assert(editor.includes('if(hasPendingChanges()){toast("Hãy nhấn Xác nhận'),'Unconfirmed edits must block publishing');
 assert(editor.includes('const record=idx!==undefined?getList(area)[Number(idx)]:editingState[area]'),'Uploaded files must remain staged until confirmation');
 assert(editor.includes('select("content,updated_at").single()'),'Publishing should verify the database response');
+assert(editor.includes('confirmedRevision!==awaitingRevision'),'Publishing must reject an unconfirmed iframe preview revision');
 assert(!editor.includes('p.innerHTML=\'<div class="cms-preview-hero"'),'Legacy fake mini-site preview must be removed');
 
 const vm=require('node:vm');

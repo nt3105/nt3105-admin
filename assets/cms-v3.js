@@ -73,7 +73,7 @@ function makeField(area,key,label,type,min=0,max=100,idx=-1){
 function listEditor(name,headline) {
  const items=name==="tracks"?state.music.tracks:state[name];
  return '<div class="cms-list-head"><h3>'+headline+' <small>('+items.length+')</small></h3><button type="button" data-add="'+name+'" class="cms-btn">＋ Thêm mới</button></div>'+
- (items.length?items.map((it,i)=>'<div class="cms-item"><div class="cms-item-head"><b>#'+(i+1)+' · '+clean(it.title||it.name||"Mới")+'</b><div><button type="button" data-move="'+name+'" data-index="'+i+'" data-dir="-1" aria-label="Di chuyển lên">↑</button><button type="button" data-move="'+name+'" data-index="'+i+'" data-dir="1" aria-label="Di chuyển xuống">↓</button><button type="button" data-delete="'+name+'" data-index="'+i+'" aria-label="Xoá">✕</button></div></div>'+listSchemas[name].map(f=>makeField(name,...f,i)).join("")+'</div>').join(""):'<div class="cms-empty">Chưa có nội dung. Nhấn “Thêm mới” để bắt đầu.</div>');
+ (items.length?items.map((it,i)=>'<div class="cms-item"><div class="cms-item-head"><b>#'+(i+1)+' · '+clean(it.title||it.name||"Mới")+'</b><div><button type="button" data-move="'+name+'" data-index="'+i+'" data-dir="-1" aria-label="Di chuyển lên">↑</button><button type="button" data-move="'+name+'" data-index="'+i+'" data-dir="1" aria-label="Di chuyển xuống">↓</button><button type="button" data-delete="'+name+'" data-index="'+i+'" aria-label="Xoá">✕</button></div></div>'+listSchemas[name].map(f=>makeField(name,f[0],f[1],f[2],f[3]||0,f[4]||100,i)).join("")+'</div>').join(""):'<div class="cms-empty">Chưa có nội dung. Nhấn “Thêm mới” để bắt đầu.</div>');
 }
 function renderEditor(){
  const root=$("#cmsEditor");if(!root)return;

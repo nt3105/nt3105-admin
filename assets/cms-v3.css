@@ -69,3 +69,35 @@
 #cmsStudio .cms-panel-title button{padding:7px 9px;font-size:10px}
 #cmsStudio .cms-actions .cms-btn{max-width:100%}
 @media(max-width:440px){#cmsStudio .cms-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}#cmsStudio .cms-actions .cms-btn{padding:12px 8px}}
+
+
+/* Admin V3 live website preview – iframe shows the actual site, not a mock-up. */
+#cmsStudio .cms-workspace{grid-template-columns:minmax(290px,.84fr) minmax(380px,1.25fr);align-items:start}
+#cmsStudio .cms-preview-panel{position:sticky;top:12px;align-self:start;padding:16px;min-width:0}
+#cmsStudio .cms-preview-panel .cms-panel-title{align-items:center;gap:10px;flex-wrap:wrap}
+#cmsStudio .cms-preview-toolbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#cmsStudio .cms-preview-toolbar a.cms-btn{display:inline-flex;align-items:center;text-decoration:none}
+#cmsStudio .cms-preview-toolbar .cms-btn{font-size:10px;padding:8px 10px;white-space:nowrap}
+#cmsStudio .cms-preview-status{display:flex;align-items:center;min-height:32px;font-size:11px;color:#b1d6fa;line-height:1.5;padding:4px 0 8px}
+#cmsStudio .cms-preview-status.error{color:#ffafb7}
+#cmsStudio #cmsLivePreview{display:block;width:100%;max-width:none!important;margin:0!important;padding:0;position:relative;border-radius:18px;background:#0b1223;border:1px solid #afc8ff35;box-shadow:0 10px 35px #0006;overflow:hidden}
+#cmsStudio .cms-preview-viewport{width:100%;height:540px;position:relative;overflow:hidden;display:block;background:#0a0f1d;isolation:isolate}
+#cmsStudio #cmsWebsiteFrame{position:absolute;top:0;left:0;width:1280px;height:1400px;border:0;background:#070b15;transform:scale(.38);transform-origin:0 0;display:block}
+#cmsStudio #cmsLivePreview.cms-mobile{max-width:none;margin:0;box-shadow:none}
+#cmsStudio .cms-preview-panel>p{font-size:11px;line-height:1.6;color:#9fb0cd}
+#cmsStudio.cms-expanded .cms-workspace{grid-template-columns:minmax(0,1fr)}
+#cmsStudio.cms-expanded .cms-edit-panel{max-width:750px}
+#cmsStudio.cms-expanded .cms-preview-panel{position:relative;top:0;width:100%}
+@media(max-width:920px){
+ #cmsStudio .cms-workspace{grid-template-columns:minmax(0,1fr)}
+ #cmsStudio .cms-preview-panel{position:relative;top:0}
+}
+@media(min-width:921px){
+ #cmsStudio .cms-edit-panel{max-height:calc(100vh - 25px);overflow-y:auto;scrollbar-width:thin}
+ #cmsStudio.cms-expanded .cms-edit-panel{max-height:none;overflow-y:visible}
+}
+@media(max-width:480px){
+ #cmsStudio .cms-preview-panel{padding:10px}
+ #cmsStudio .cms-preview-toolbar{justify-content:flex-start}
+ #cmsStudio .cms-panel-title h3{font-size:13px}
+}

@@ -114,7 +114,8 @@ const PUBLIC_ORIGIN="https://nt3105.io.vn";
 const previewSection={overview:"hero",hero:"hero",about:"about",gallery:"gallery",
  music:"music",effects:"effects",brand:"brand",navigation:"navigation",skills:"skills",
  projects:"projects",journey:"journey",contact:"contact",socials:"socials",theme:"theme",
- layout:"layout",seo:"seo",footer:"footer",comments:"comments"};
+ layout:"layout",seo:"seo",footer:"footer",comments:"comments",
+ personal:"personal",code:"code",donate:"donate",gallerySettings:"gallery",skillsSettings:"skills",projectsSettings:"projects",socialsSettings:"socials"};
 function previewStatus(text,error=false){
  const el=$("#cmsPreviewStatus");if(!el)return;
  el.textContent=text;el.classList.toggle("error",Boolean(error));

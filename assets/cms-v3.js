@@ -170,10 +170,10 @@ async function publish(){
  if(!await saveDraft())return;
  publishing=true;$("#cmsPublish").disabled=true;
  try{
-   const {error}=await client.from("nt3105_cms_published").upsert({id:KEY,content:state,updated_at:new Date().toISOString()});
+   const {error}=await client.from("nt3105_cms_published").upsert({id:KEY,content:{...state,__cmsReady:true},updated_at:new Date().toISOString()});
    if(error)throw error;
    lastPublished=clone(state);
-   toast("✓ Đã xuất bản. Tải lại website chính để xem thay đổi.");
+   toast("✓ Đã xuất bản lên nt3105.io.vn. Trang khách đang mở sẽ tự kiểm tra cập nhật.");
  }catch(e){console.error(e);toast("Xuất bản thất bại: "+String(e.message||e).slice(0,120),true)}
  finally{publishing=false;$("#cmsPublish").disabled=false}
 }

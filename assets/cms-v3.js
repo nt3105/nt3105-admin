@@ -9,12 +9,15 @@ const groups=[
  ["skills","◇","Kỹ năng"],["projects","▤","Dự án"],["journey","↗","Hành trình"],
  ["contact","✉","Liên hệ"],["socials","◎","Mạng xã hội"],["theme","◐","Màu sắc"],
  ["layout","▥","Bố cục"],["seo","⌕","SEO"],["footer","⌑","Chân trang"],
- ["comments","☏","Bình luận"]
+ ["comments","☏","Bình luận"],["personal","☆","Góc riêng"],["code","</>","Góc code"],["donate","♧","Ủng hộ"]
 ];
 const defaults={
  hero:{title:"Xin chào, mình là Ngân Tú Dev.",subtitle:"Đang học lập trình và khám phá công nghệ.",image:"",position:50,overlay:35,visible:true},
  about:{title:"Một chút về mình",body:"",visible:false},
- gallery:[],music:{enabled:true,tracks:[]},
+ gallery:[],gallerySettings:{title:"Một chút ngoài những dòng code.",subtitle:"NHỮNG KHOẢNH KHẮC CỦA MÌNH"},
+ skillsSettings:{title:"Kỹ năng & công cụ.",description:"Những ngôn ngữ và công cụ mình đang thực hành."},
+ projectsSettings:{title:"Những gì mình làm."},socialsSettings:{title:"Kết nối với mình."},
+ music:{enabled:true,tracks:[]},
  effects:{glass:true,reveal:true,parallax:true,glow:true,softMotion:true,intensity:35,blur:18},
  brand:{logoText:"NT3105",tagline:"Code · Life · Music",favicon:""},
  navigation:{home:"Trang chủ",about:"Về mình",skills:"Kỹ năng",projects:"Dự án",contact:"Liên hệ"},
@@ -26,7 +29,10 @@ const defaults={
  layout:{radius:22,spacing:24,cardColumns:3},
  seo:{title:"NT3105 | Website cá nhân",description:"Lập trình và những dự án của NT3105.",ogImage:""},
  footer:{text:"© 2026 NT3105",credit:"Made with HTML, CSS & JavaScript"},
- comments:{enabled:true,title:"Lời nhắn từ khách"}
+ comments:{enabled:true,title:"Lời nhắn từ khách"},
+ personal:{visible:true,title:"Một chút về sở thích của mình.",memoryTitle:"Giữ lại một khoảnh khắc.",memoryDescription:"Những tấm ảnh ngoài màn hình code."},
+ code:{visible:true,title:"Góc code.",description:"Những ví dụ nhỏ để đọc, thử và học. Chọn ngôn ngữ rồi sao chép để chạy trên máy."},
+ donate:{visible:true,title:"Góp gió thành bão.",qrImage:""}
 };
 const schema={
 hero:[["title","Tiêu đề","text"],["subtitle","Mô tả đầu trang","textarea"],["image","Ảnh đầu trang","image"],["position","Vị trí ảnh (%)","range",0,100],["overlay","Độ tối lớp phủ (%)","range",0,90],["visible","Hiện đầu trang","check"]],
@@ -34,7 +40,7 @@ about:[["title","Tiêu đề","text"],["body","Nội dung giới thiệu","texta
 music:[["enabled","Bật trình phát nhạc","check"]],
 effects:[["glass","Kính mờ Liquid Glass","check"],["reveal","Hiện dần khi cuộn","check"],["parallax","Parallax","check"],["glow","Ánh sáng tương tác","check"],["softMotion","Chuyển động đàn hồi","check"],["intensity","Cường độ hiệu ứng","range",0,100],["blur","Độ mờ kính","range",0,35]],
 brand:[["logoText","Chữ logo","text"],["tagline","Khẩu hiệu","text"],["favicon","Favicon","image"]],
-navigation:[["home","Mục Trang chủ","text"],["about","Mục Về mình","text"],["skills","Mục Kỹ năng","text"],["projects","Mục Dự án","text"],["contact","Mục Liên hệ","text"]],
+navigation:[["home","Mục Trang chủ","text"],["about","Mục Về mình","text"],["skills","Mục Kỹ năng","text"],["projects","Mục Dự án","text"],["contact","Mục Liên hệ","text"],["journey","Mục Hành trình","text"],["personal","Mục Góc riêng","text"],["code","Mục Góc code","text"],["donate","Mục Ủng hộ","text"],["social","Mục Mạng xã hội","text"]],
 journey:[["title","Tiêu đề Hành trình","text"],["body","Nội dung","textarea"],["visible","Hiển thị","check"]],
 contact:[["title","Tiêu đề Liên hệ","text"],["description","Lời nhắn","textarea"],["email","Email công khai","text"],["visible","Hiển thị","check"]],
 socials:[["telegram","Telegram URL","url"],["facebook","Facebook URL","url"],["tiktok","TikTok URL","url"],["github","GitHub URL","url"]],
@@ -42,12 +48,19 @@ theme:[["accent","Màu nhấn","color"],["surface","Nền tối","color"],["text
 layout:[["radius","Độ bo góc","range",0,44],["spacing","Khoảng cách","range",8,52],["cardColumns","Số cột thẻ","range",1,4]],
 seo:[["title","Tiêu đề SEO","text"],["description","Mô tả SEO","textarea"],["ogImage","Ảnh chia sẻ","image"]],
 footer:[["text","Bản quyền","text"],["credit","Dòng ghi chú","text"]],
-comments:[["enabled","Hiện phần bình luận","check"],["title","Tiêu đề phần bình luận","text"]]
+comments:[["enabled","Hiện phần bình luận","check"],["title","Tiêu đề phần bình luận","text"]],
+ gallerySettings:[["title","Tiêu đề thư viện","text"],["subtitle","Dòng giới thiệu thư viện","text"]],
+ skillsSettings:[["title","Tiêu đề kỹ năng","text"],["description","Mô tả kỹ năng","textarea"]],
+ projectsSettings:[["title","Tiêu đề dự án","text"]],
+ socialsSettings:[["title","Tiêu đề liên kết mạng xã hội","text"]],
+ personal:[["visible","Hiển thị Góc riêng","check"],["title","Tiêu đề Góc riêng","text"],["memoryTitle","Tiêu đề khung ảnh","text"],["memoryDescription","Mô tả khung ảnh","textarea"]],
+ code:[["visible","Hiển thị Góc code","check"],["title","Tiêu đề Góc code","text"],["description","Giới thiệu Góc code","textarea"]],
+ donate:[["visible","Hiển thị mục ủng hộ","check"],["title","Tiêu đề mục ủng hộ","text"],["qrImage","Ảnh QR đang hiển thị (nếu có)","image"]]
 };
 const listSchemas={
- gallery:[["title","Tiêu đề","text"],["src","Ảnh","image"],["visible","Công khai","check"]],
- skills:[["name","Tên kỹ năng","text"],["description","Mô tả","text"],["visible","Công khai","check"]],
- projects:[["title","Tên dự án","text"],["description","Mô tả","textarea"],["url","URL","url"],["image","Ảnh","image"],["visible","Công khai","check"]],
+ gallery:[["title","Tiêu đề","text"],["src","Ảnh gốc","image"],["thumb","Ảnh thumbnail (tuỳ chọn)","image"],["visible","Công khai","check"]],
+ skills:[["name","Tên kỹ năng","text"],["description","Mô tả","text"],["icon","Icon kỹ năng (URL)","image"],["level","Mức tiến độ (%)","range",0,100],["status","Nhãn tiến độ","text"],["visible","Công khai","check"]],
+ projects:[["title","Tên dự án","text"],["description","Mô tả","textarea"],["url","URL demo","url"],["image","Ảnh","image"],["type","Loại dự án","text"],["tags","Các thẻ (ngăn cách bằng dấu phẩy)","text"],["source","URL mã nguồn","url"],["visible","Công khai","check"]],
  tracks:[["title","Tên bài hát","text"],["artist","Nghệ sĩ","text"],["cover","Ảnh bìa","image"],["src","File nhạc","audio"],["visible","Công khai","check"]]
 };
 const $=s=>document.querySelector(s);
@@ -86,12 +99,15 @@ function renderEditor(){
    return;
  }
  if(tab==="gallery"||tab==="skills"||tab==="projects"){
-   root.innerHTML=listEditor(tab,{gallery:"Ảnh “Một chút về mình”",skills:"Danh sách kỹ năng",projects:"Danh sách dự án"}[tab]);return;
+   const settings={gallery:"gallerySettings",skills:"skillsSettings",projects:"projectsSettings"}[tab];
+   const head={gallery:"Tuỳ chỉnh thư viện",skills:"Tiêu đề kỹ năng",projects:"Tiêu đề dự án"}[tab];
+   root.innerHTML='<div class="cms-field-head"><h3>'+head+'</h3></div><div class="cms-fields">'+(schema[settings]||[]).map(f=>makeField(settings,...f)).join("")+'</div>'+
+   listEditor(tab,{gallery:"Ảnh “Một chút về mình”",skills:"Danh sách kỹ năng",projects:"Danh sách dự án"}[tab]);return;
  }
  let fields=schema[tab]||[];
  root.innerHTML='<h2>'+clean(groups.find(x=>x[0]===tab)?.[2]||"")+'</h2>'+
  '<div class="cms-fields">'+fields.map(f=>makeField(tab,...f)).join("")+'</div>'+
- (tab==="music"?listEditor("tracks","Danh sách bài hát"):"")+
+ (tab==="music"?listEditor("tracks","Danh sách bài hát"):"")+(tab==="socials"?'<div class="cms-fields cms-extra-fields">'+schema.socialsSettings.map(f=>makeField("socialsSettings",...f)).join("")+"</div>":"")+
  (tab==="comments"?'<p class="cms-info">Bảng kiểm duyệt bình luận gốc vẫn ở bên dưới. Cấu hình này chỉ kiểm soát cách hiện nhận xét trên website chính.</p>':"");
 }
 const PUBLIC_ORIGIN="https://nt3105.io.vn";
@@ -223,8 +239,8 @@ function handleChanges(event){
  }
 }
 function addItem(name){
- const base={gallery:{title:"Ảnh mới",src:"",visible:true},skills:{name:"Kỹ năng mới",description:"",visible:true},
- projects:{title:"Dự án mới",description:"",url:"",image:"",visible:true},
+ const base={gallery:{title:"Ảnh mới",src:"",thumb:"",visible:true},skills:{name:"Kỹ năng mới",description:"",icon:"",level:50,status:"Đang học",visible:true},
+ projects:{title:"Dự án mới",description:"",url:"",image:"",source:"",tags:"",type:"",visible:true},
  tracks:{title:"Bài hát mới",artist:"",cover:"",src:"",visible:true}};
  getList(name).push({...base[name]});renderEditor();updatePendingUI();
 }
@@ -380,7 +396,7 @@ function setupUI(){
    if(!field)return;
    const sectionName=field.dataset.area||field.dataset.uploadArea||tab;
    const fieldName=field.dataset.key||field.dataset.uploadKey||"";
-   previewNavigate(sectionName==="tracks"?"music":sectionName,fieldName);
+   previewNavigate(sectionName==="tracks"?"music":sectionName.endsWith("Settings")?tab:sectionName,fieldName);
  });
  renderEditor();renderPreview();
 }

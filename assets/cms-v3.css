@@ -101,3 +101,15 @@
  #cmsStudio .cms-preview-toolbar{justify-content:flex-start}
  #cmsStudio .cms-panel-title h3{font-size:13px}
 }
+
+
+/* V5 explicit confirmation before showing edits in the preview. */
+#cmsStudio .cms-confirm-panel{position:sticky;bottom:0;z-index:10;margin-top:18px;padding:15px;border:1px solid #9fbaff43;border-radius:16px;background:linear-gradient(145deg,rgba(15,24,46,.96),rgba(21,32,55,.97));backdrop-filter:blur(18px);box-shadow:0 -8px 25px #0004}
+#cmsStudio .cms-pending-note{font-size:12px;line-height:1.6;margin:0 0 10px;color:#b6ceea}
+#cmsStudio .cms-confirm-actions{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:9px}
+#cmsStudio .cms-confirm-actions .cms-btn{min-height:43px;white-space:normal;padding:10px 12px}
+#cmsStudio .cms-confirm-actions .cms-primary{box-shadow:0 5px 24px #85baff25}
+#cmsStudio .cms-confirm-actions .cms-btn:disabled{cursor:default;box-shadow:none;opacity:.52}
+#cmsStudio .cms-preview-status.error{color:#ffbabd!important}
+#cmsStudio #cmsReload{background:#a0c5ff15;border-color:#adcaff55}
+@media(max-width:410px){#cmsStudio .cms-confirm-actions{grid-template-columns:1fr}#cmsStudio .cms-confirm-panel{padding:11px}}

@@ -241,7 +241,7 @@ function setupUI(){
  renderEditor();renderPreview();
 }
 window.addEventListener("nt3105:admin-auth",async event=>{
- if(!event.detail?.active){client=null;loadOkay=false;return}
+ if(!event.detail?.active){client=null;loadOkay=false;state=initial();lastPublished=null;document.getElementById("cmsStudio")?.remove();return}
  client=event.detail.client;setupUI();await loadData();
 });
 })();

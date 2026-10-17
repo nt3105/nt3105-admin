@@ -306,6 +306,10 @@ async function saveDraft(){
 async function publish(){
  if(publishing)return;
  if(hasPendingChanges()){toast("Hãy nhấn Xác nhận để cập nhật bản xem trước trước khi Xuất bản.",true);return}
+ if(!previewFrameReady||awaitingRevision<1||confirmedRevision!==awaitingRevision){
+  toast("Bản xem trước chưa xác nhận hiển thị đầy đủ. Nhấn Tải lại xem trước, đợi thông báo ✓ rồi hãy Xuất bản.",true);
+  return;
+ }
  if(!confirm("Xuất bản nội dung mới cho khách truy cập nt3105.io.vn?"))return;
  if(!await saveDraft())return;
  publishing=true;$("#cmsPublish").disabled=true;
@@ -398,7 +402,7 @@ function setupUI(){
    resizePreviewFrame();
  });
  $("#cmsReload").addEventListener("click",()=>{
-   previewFrameReady=false;
+   previewFrameReady=false;awaitingRevision=0;confirmedRevision=0;
    const frame=$("#cmsWebsiteFrame");
    frame.src="https://nt3105.io.vn/?nt3105_preview=1&cms_ui=v5&retry="+Date.now();
    previewStatus("↻ Đang kết nối lại bản xem trước...");
@@ -433,7 +437,7 @@ function setupUI(){
  renderEditor();renderPreview();
 }
 window.addEventListener("nt3105:admin-auth",async event=>{
- if(!event.detail?.active){client=null;loadOkay=false;state=initial();editingState=initial();lastPublished=null;pendingUploads=0;previewFrameReady=false;clearTimeout(previewRefreshTimer);previewResizeObserver?.disconnect();document.getElementById("cmsStudio")?.remove();return}
- client=event.detail.client;previewFrameReady=false;setupUI();await loadData();
+ if(!event.detail?.active){client=null;loadOkay=false;state=initial();editingState=initial();lastPublished=null;pendingUploads=0;previewFrameReady=false;awaitingRevision=0;confirmedRevision=0;clearTimeout(previewRefreshTimer);previewResizeObserver?.disconnect();document.getElementById("cmsStudio")?.remove();return}
+ client=event.detail.client;previewFrameReady=false;awaitingRevision=0;confirmedRevision=0;setupUI();await loadData();
 });
 })();

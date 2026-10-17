@@ -168,7 +168,7 @@
     const csv = '\ufeff' + [keys.join(','), ...comments.map(c => keys.map(k => escapeCell(c[k])).join(','))].join('\r\n');
     download('.csv', csv, 'text/csv;charset=utf-8');
   }
-  function init() {
+  async function init() {
     $('#loginForm').addEventListener('submit', login);
     $('#logout').addEventListener('click', logout);
     $('#search').addEventListener('input', () => { visible = 8; render(); });
@@ -192,15 +192,45 @@
       if (event.key === 'Escape') document.querySelectorAll('.overlay:not([hidden])')
         .forEach(node => modal('#' + node.id, false));
     });
-    if (!configured() || !window.supabase?.createClient) {
-      $('#connection').textContent = 'Cần cấu hình Supabase trong assets/config.js để Admin đăng nhập.';
-      $('#loginError').textContent = 'Chưa kết nối Supabase.';
-      $('#loginBtn').disabled = true; return;
+    if (!configured()) {
+      $('#connection').textContent = 'Chưa tải được cấu hình Supabase mới. Hãy tải lại trang để làm mới cache.';
+      $('#loginError').textContent = 'Thiếu cấu hình trong assets/config.js.';
+      $('#loginBtn').disabled = true;
+      return;
     }
-    db = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
-      auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false }
-    });
-    $('#connection').textContent = '🔐 Đăng nhập bằng Supabase. Chỉ Admin được RLS cấp quyền mới có thể quản lý.';
+    if (!window.supabase?.createClient) {
+      $('#connection').textContent = 'Đang thử tải thư viện Supabase từ máy chủ dự phòng...';
+      try {
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/@supabase/supabase-js@2';
+          script.onload = resolve;
+          script.onerror = () => reject(new Error('Cannot load Supabase SDK from backup CDN'));
+          document.head.appendChild(script);
+        });
+      } catch (error) {
+        console.error('Supabase SDK fallback failed', error);
+      }
+    }
+    if (!window.supabase?.createClient) {
+      $('#connection').textContent = 'Không tải được thư viện Supabase. Vui lòng thử lại khi kết nối mạng ổn định.';
+      $('#loginError').textContent = 'Lỗi tải thư viện Supabase.';
+      $('#loginBtn').disabled = true;
+      return;
+    }
+    try {
+      db = window.supabase.createClient(config.supabaseUrl, config.supabasePublishableKey, {
+        auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false }
+      });
+      $('#connection').textContent = '🔐 Đã kết nối cấu hình Supabase. Hãy đăng nhập tài khoản Admin.';
+      $('#loginError').textContent = '';
+      $('#loginBtn').disabled = false;
+    } catch (error) {
+      console.error(error);
+      $('#connection').textContent = 'Không thể khởi tạo kết nối Supabase.';
+      $('#loginError').textContent = 'Cấu hình Supabase có lỗi.';
+      $('#loginBtn').disabled = true;
+    }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();

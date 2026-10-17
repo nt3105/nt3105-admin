@@ -145,6 +145,7 @@
       $('#password').value = '';
       showPortal(true);
       await refresh();
+      window.dispatchEvent(new CustomEvent('nt3105:admin-auth', { detail: { active: true, client: db } }));
       toast('✓ Đã mở bảng quản trị.');
     } catch (error) {
       console.error('Unexpected Supabase login error:', error);
@@ -154,6 +155,7 @@
     }
   }
     async function logout() {
+    window.dispatchEvent(new CustomEvent('nt3105:admin-auth', { detail: { active: false } }));
     showPortal(false); comments = []; filter = 'all';
     try { await db?.auth.signOut(); } catch (error) { console.error(error); }
     $('#password').value = '';

@@ -14,7 +14,7 @@
     node.type = 'button'; node.addEventListener('click', onClick); return node;
   };
   let db, comments = [], admin = false, filter = 'all', visible = 8;
-  let replyId = null, deleteId = null, toastTimer;
+  let replyId = null, deleteId = null, editId = null, likesId = null, toastTimer;
   const LIMIT = 500;
   function toast(message) {
     $('#notification').textContent = message;
@@ -36,6 +36,16 @@
     return /^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(String(config.supabaseUrl || ''))
       && /^sb_publishable_[\w-]+$/.test(String(config.supabasePublishableKey || ''));
   }
+function relativeTime(raw){
+ const date=new Date(raw),ms=date.getTime();if(!Number.isFinite(ms))return '';
+ const seconds=Math.max(0,Math.floor((Date.now()-ms)/1000));
+ if(seconds<60)return 'Vừa xong';
+ if(seconds<3600)return Math.floor(seconds/60)+' phút trước';
+ if(seconds<86400)return Math.floor(seconds/3600)+' giờ trước';
+ if(seconds<2592000)return Math.floor(seconds/86400)+' ngày trước';
+ if(seconds<31536000)return Math.floor(seconds/2592000)+' tháng trước';
+ return Math.floor(seconds/31536000)+' năm trước';
+}
   function render() {
     if (!admin) return;
     const publicComments = comments.filter(c => !c.is_hidden);
@@ -61,7 +71,7 @@
       const card = el('article', 'comment' + (c.is_hidden ? ' is-hidden' : '') + (c.is_pinned ? ' is-pinned' : ''));
       const head = el('div', 'comment-row');
       const who = el('div', 'who');
-      who.append(el('strong', '', c.author), el('span', '', new Date(c.created_at).toLocaleDateString('vi-VN')));
+      who.append(el('strong', '', c.author), el('span', '', relativeTime(c.created_at)));
       if (c.is_pinned) who.append(el('span', 'pin-tag', '✦ Đã ghim'));
       const avatar = el('div', 'avatar', String(c.author || '?').trim().charAt(0).toUpperCase());
       head.append(avatar, who, el('span', 'small-stars', '★'.repeat(Math.max(0, Math.min(5, c.rating)))));
@@ -83,6 +93,12 @@
         }),
         button(c.is_hidden ? '◉ Hiện lại' : '◌ Ẩn', '', () => update(c.id, { is_hidden: !c.is_hidden })),
         button(c.is_pinned ? '◇ Bỏ ghim' : '✦ Ghim', '', () => update(c.id, { is_pinned: !c.is_pinned })),
+        button('✎ Sửa nội dung', '', () => {
+          editId = c.id; $('#editBody').value = c.body; modal('#editModal', true);
+        }),
+        button('♥ ' + (c.likes_count || 0) + ' · Sửa lượt thích', '', () => {
+          likesId = c.id; $('#editLikes').value = c.likes_count || 0; modal('#likesModal', true);
+        }),
         button('✕ Xoá', 'danger', () => { deleteId = c.id; modal('#deleteModal', true); })
       );
       card.append(controls); target.append(card);
@@ -92,7 +108,7 @@
   async function refresh() {
     if (!admin || !db) return;
     const { data, error } = await db.from('site_comments')
-      .select('id,author,body,rating,is_hidden,is_pinned,admin_reply,admin_reply_author,created_at')
+      .select('id,author,body,rating,is_hidden,is_pinned,admin_reply,admin_reply_author,likes_count,created_at')
       .order('created_at', { ascending: false }).limit(LIMIT);
     if (error) { console.error(error); $('#commentList').replaceChildren(el('p', 'error-msg', 'Không tải được bình luận. Nhấn Tải lại để thử lại.')); toast('Không thể tải bình luận. Kiểm tra quyền Admin.'); return; }
     if (!admin) return;
@@ -209,7 +225,7 @@
   }
   function exportCsv() {
     if (!admin) return;
-    const keys = ['id','author','body','rating','is_hidden','is_pinned','admin_reply','created_at'];
+    const keys = ['id','author','body','rating','is_hidden','is_pinned','admin_reply','admin_reply_author','likes_count','created_at'];
     const escapeCell = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
     const csv = '\ufeff' + [keys.join(','), ...comments.map(c => keys.map(k => escapeCell(c[k])).join(','))].join('\r\n');
     download('.csv', csv, 'text/csv;charset=utf-8');
@@ -229,6 +245,20 @@
     window.addEventListener('focus', () => { if (admin) refresh(); });
     setInterval(() => { if (admin && !document.hidden && !replyId && !deleteId) refresh(); }, 15000);
     $('#replyForm').addEventListener('submit', saveReply);
+    $('#closeEdit').addEventListener('click', () => modal('#editModal', false));
+    $('#closeLikes').addEventListener('click', () => modal('#likesModal', false));
+    $('#editForm').addEventListener('submit', async event => {
+      event.preventDefault();const body=$('#editBody').value.trim();
+      if(!editId || body.length<3 || body.length>500)return;
+      const submit=$('#saveEdit');if(submit.disabled)return;submit.disabled=true;
+      try{if(await update(editId,{body})){editId=null;modal('#editModal',false)}}finally{submit.disabled=false}
+    });
+    $('#likesForm').addEventListener('submit', async event => {
+      event.preventDefault();const likes_count=Number($('#editLikes').value);
+      if(!likesId || !Number.isInteger(likes_count) || likes_count<0 || likes_count>1000000000)return;
+      const submit=$('#saveLikes');if(submit.disabled)return;submit.disabled=true;
+      try{if(await update(likesId,{likes_count})){likesId=null;modal('#likesModal',false)}}finally{submit.disabled=false}
+    });
     $('#closeReply').addEventListener('click', () => modal('#replyModal', false));
     $('#closeDelete').addEventListener('click', () => modal('#deleteModal', false));
     $('#cancelDelete').addEventListener('click', () => modal('#deleteModal', false));

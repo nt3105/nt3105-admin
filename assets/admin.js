@@ -68,7 +68,7 @@
       card.append(head, el('p', '', c.body));
       if (c.admin_reply) {
         const reply = el('div', 'reply');
-        reply.append(el('div', 'reply-name', '✦ NT3105 · Admin'), el('p', '', c.admin_reply));
+        reply.append(el('div', 'reply-name', '✦ ' + (c.admin_reply_author || 'NT3105') + ' · Admin'), el('p', '', c.admin_reply));
         card.append(reply);
       }
       const controls = el('div', 'inline-actions');
@@ -77,6 +77,8 @@
           replyId = c.id;
           $('#replyContext').textContent = c.author + ' · ' + c.body.slice(0, 140);
           $('#replyText').value = c.admin_reply || '';
+          let savedName = '';try { savedName = localStorage.getItem('nt3105-reply-name') || ''; } catch {}
+          $('#replyAuthor').value = c.admin_reply_author || savedName || 'NT3105';
           modal('#replyModal', true);
         }),
         button(c.is_hidden ? '◉ Hiện lại' : '◌ Ẩn', '', () => update(c.id, { is_hidden: !c.is_hidden })),
@@ -90,9 +92,10 @@
   async function refresh() {
     if (!admin || !db) return;
     const { data, error } = await db.from('site_comments')
-      .select('id,author,body,rating,is_hidden,is_pinned,admin_reply,created_at')
+      .select('id,author,body,rating,is_hidden,is_pinned,admin_reply,admin_reply_author,created_at')
       .order('created_at', { ascending: false }).limit(LIMIT);
-    if (error) { console.error(error); toast('Không thể tải bình luận. Kiểm tra quyền Admin.'); return; }
+    if (error) { console.error(error); $('#commentList').replaceChildren(el('p', 'error-msg', 'Không tải được bình luận. Nhấn Tải lại để thử lại.')); toast('Không thể tải bình luận. Kiểm tra quyền Admin.'); return; }
+    if (!admin) return;
     comments = data || []; render();
   }
   function readableAuthError(error) {
@@ -166,16 +169,23 @@
     try {
       const { data, error } = await db.from('site_comments').update(fields).eq('id', id).select('id');
       if (error || !data?.length) throw error || new Error('Forbidden');
-      await refresh(); toast('✓ Đã cập nhật bình luận.');
-    } catch (error) { console.error(error); toast('Không thể sửa. Kiểm tra RLS.'); }
+      await refresh(); toast('✓ Đã cập nhật bình luận.'); return true;
+    } catch (error) { console.error(error); toast('Không thể sửa. Kiểm tra RLS.'); return false; }
   }
   async function saveReply(event) {
     event.preventDefault();
     if (!replyId || !admin) return;
     const message = $('#replyText').value.trim();
     if (message.length > 350) return;
-    await update(replyId, { admin_reply: message || null });
-    replyId = null; modal('#replyModal', false);
+    const name = $('#replyAuthor').value.trim();
+    if (!name || name.length > 40) return;
+    const submit = $('#saveReply'); if (submit.disabled) return; submit.disabled = true;
+    try {
+      if (await update(replyId, { admin_reply: message || null, admin_reply_author: message ? name : null })) {
+        try { localStorage.setItem('nt3105-reply-name', name); } catch {}
+        replyId = null; modal('#replyModal', false);
+      }
+    } finally { submit.disabled = false; }
   }
   async function removeComment() {
     if (!deleteId || !admin) return;
@@ -216,6 +226,8 @@
     $('#exportJson').addEventListener('click', exportJson);
     $('#exportCsv').addEventListener('click', exportCsv);
     $('#refresh').addEventListener('click', refresh);
+    window.addEventListener('focus', () => { if (admin) refresh(); });
+    setInterval(() => { if (admin && !document.hidden && !replyId && !deleteId) refresh(); }, 15000);
     $('#replyForm').addEventListener('submit', saveReply);
     $('#closeReply').addEventListener('click', () => modal('#replyModal', false));
     $('#closeDelete').addEventListener('click', () => modal('#deleteModal', false));
@@ -271,3 +283,4 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
   else init();
 })();
+

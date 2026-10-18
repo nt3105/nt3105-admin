@@ -116,6 +116,7 @@ function listEditor(name,headline) {
 }
 function renderEditor(){
  const root=$("#cmsEditor");if(!root)return;
+ const moderation=$("#cmsModeration");if(moderation)moderation.hidden=tab!=="comments";
  if(tab==="overview"){
    root.innerHTML='<h2>Bảng điều khiển nội dung</h2><p>Chỉnh trên Admin → Lưu bản nháp → Xem trước → Xuất bản. Mọi thay đổi chỉ xuất hiện trên website công khai sau khi xuất bản.</p>'+
    '<div class="cms-metrics"><div><strong>'+groups.length+'</strong><span>Phần quản trị</span></div><div><strong>'+editingState.gallery.length+'</strong><span>Ảnh</span></div><div><strong>'+editingState.music.tracks.length+'</strong><span>Bài hát</span></div></div>'+
@@ -132,7 +133,7 @@ function renderEditor(){
  root.innerHTML='<h2>'+clean(groups.find(x=>x[0]===tab)?.[2]||"")+'</h2>'+
  '<div class="cms-fields">'+fields.map(f=>makeField(tab,...f)).join("")+'</div>'+
  (tab==="music"?listEditor("tracks","Danh sách bài hát"):"")+(tab==="socials"?'<div class="cms-fields cms-extra-fields">'+schema.socialsSettings.map(f=>makeField("socialsSettings",...f)).join("")+"</div>":"")+
- (tab==="comments"?'<p class="cms-info">Bảng kiểm duyệt bình luận gốc vẫn ở bên dưới. Cấu hình này chỉ kiểm soát cách hiện nhận xét trên website chính.</p>':"");
+ (tab==="comments"?'<p class="cms-info">Quản lý bình luận ở bảng phía trên. Trả lời, ẩn/hiện, ghim và xoá có hiệu lực ngay; không cần Xuất bản.</p>':"");
 }
 const PUBLIC_ORIGIN="https://nt3105.io.vn";
 const previewSection={overview:"hero",hero:"hero",about:"about",gallery:"gallery",
@@ -380,6 +381,9 @@ function setupUI(){
  '<div class="cms-tabs" role="navigation" aria-label="Chuyên mục Admin">'+groups.map(g=>'<button class="cms-tab'+(g[0]==="overview"?" active":"")+'" type="button" data-tab="'+g[0]+'"><span>'+g[1]+'</span> '+g[2]+'</button>').join("")+'</div>'+
  '<div class="cms-workspace"><div class="cms-edit-panel"><div class="cms-panel-title"><h3 id="cmsCurrent">Tổng quan</h3><span>BẢN NHÁP</span></div><div id="cmsEditor"></div><div class="cms-confirm-panel"><p id="cmsPendingNote" class="cms-pending-note" role="status">✓ Mục này đã khớp bản xem trước.</p><div class="cms-confirm-actions"><button type="button" id="cmsDiscard" class="cms-btn" disabled>↶ Huỷ sửa đổi</button><button type="button" id="cmsAccept" class="cms-btn cms-primary" disabled>✓ Xác nhận → Xem trước</button></div></div></div><div class="cms-preview-panel"><div class="cms-panel-title"><h3>Xem trước</h3><div class="cms-preview-toolbar"><button type="button" id="cmsReload" class="cms-btn">↻ Tải lại xem trước</button><button type="button" id="cmsExpand" class="cms-btn">⤢ Mở rộng</button><button type="button" id="cmsDevice" class="cms-btn">▣ Máy tính</button><a class="cms-btn" href="https://nt3105.io.vn/" target="_blank" rel="noopener noreferrer">↗ Web chính</a></div></div><div class="cms-preview-status" id="cmsPreviewStatus" role="status" aria-live="polite">Đang kết nối bản xem trước với website thật...</div><div id="cmsLivePreview" class="cms-mobile"><div class="cms-preview-viewport" id="cmsPreviewViewport"><iframe title="Website nt3105.io.vn · bản xem trước theo thời gian thực" id="cmsWebsiteFrame" src="https://nt3105.io.vn/?nt3105_preview=1&amp;cms_ui=v7" sandbox="allow-scripts allow-same-origin" referrerpolicy="strict-origin-when-cross-origin" loading="eager"></iframe></div></div><p>Đây là giao diện website thật. Chọn mục → sửa → nhấn Xác nhận để xem tại đây. Khi sửa hết, nhấn Xuất bản để cập nhật web chính.</p></div></div>';
  parent.insertBefore(section,parent.firstChild);
+ const moderation=document.createElement("div");moderation.id="cmsModeration";moderation.hidden=true;
+ moderation.append(parent.querySelector(":scope > .stats"),parent.querySelector(":scope > main.grid"));
+ section.querySelector(".cms-workspace").before(moderation);
  section.addEventListener("input",handleChanges);
  section.addEventListener("change",e=>{
    if(e.target instanceof HTMLInputElement&&e.target.type==="file")uploadFile(e.target);
@@ -442,7 +446,8 @@ function setupUI(){
  renderEditor();renderPreview();
 }
 window.addEventListener("nt3105:admin-auth",async event=>{
- if(!event.detail?.active){client=null;loadOkay=false;state=initial();editingState=initial();lastPublished=null;pendingUploads=0;previewFrameReady=false;awaitingRevision=0;confirmedRevision=0;clearTimeout(previewRefreshTimer);previewResizeObserver?.disconnect();document.getElementById("cmsStudio")?.remove();return}
+ if(!event.detail?.active){client=null;loadOkay=false;state=initial();editingState=initial();lastPublished=null;pendingUploads=0;previewFrameReady=false;awaitingRevision=0;confirmedRevision=0;clearTimeout(previewRefreshTimer);previewResizeObserver?.disconnect();const moderation=$("#cmsModeration");if(moderation)$("#portal").append(...moderation.children);document.getElementById("cmsStudio")?.remove();return}
  client=event.detail.client;previewFrameReady=false;awaitingRevision=0;confirmedRevision=0;setupUI();await loadData();
 });
 })();
+
